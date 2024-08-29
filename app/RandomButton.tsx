@@ -1,12 +1,10 @@
-"use client";
-import Image from "next/image";
 import React, { useState } from "react";
-import { MealApiResponse } from "./meals";
+import { Meal, MealApiResponse } from "./meals";
 
-const RandomMealButton = () => {
-  const [meal, setMeal] = useState<MealApiResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const RandomMealButton: React.FC = () => {
+  const [meal, setMeal] = useState<Meal | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRandomMeal = async () => {
     setLoading(true);
@@ -18,9 +16,14 @@ const RandomMealButton = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch meal");
       }
-      const data = await response.json();
-      setMeal(data.meals[0]);
+      const data: MealApiResponse = await response.json();
+      if (data.meals && data.meals.length > 0) {
+        setMeal(data.meals[0]);
+      } else {
+        throw new Error("No meal data found");
+      }
     } catch (err) {
+      setError("An error occurred while fetching the meal.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -28,33 +31,54 @@ const RandomMealButton = () => {
   };
 
   return (
-    <div>
+    <div className='flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4'>
       <button
-        className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
         onClick={fetchRandomMeal}
         disabled={loading}
+        className='mb-8 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out'
       >
-        {loading ? "Loading..." : "Generate Meal"}
+        {loading ? "Loading..." : "Get Random Meal"}
       </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {error && <p className='text-red-500 mb-4'>{error}</p>}
+
       {meal && (
-        <div className='justify-content align-center'>
-          <h2>{meal?.strMeal}</h2>
-          <img src={meal.strMealThumb} alt={meal.strMeal} width='200' />
-          <p>Category: {meal.strCategory}</p>
-          <p>Area: {meal.strArea}</p>
-          <h3>Instructions:</h3>
-          <p>{meal.strInstructions}</p>
-          <h3>Ingredients:</h3>
-          <ul>
-            {Array.from({ length: 20 }, (_, i) => i + 1)
-              .filter((i) => meal[`strIngredient${i}`])
-              .map((i) => (
-                <li key={i}>
-                  {meal[`strIngredient${i}`]} - {meal[`strMeasure${i}`]}
-                </li>
-              ))}
-          </ul>
+        <div className='bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-lg'>
+          <img
+            src={meal.strMealThumb}
+            alt={meal.strMeal}
+            className='w-full h-64 object-cover'
+          />
+          <div className='p-6'>
+            <h2 className='text-2xl font-bold mb-2 text-gray-800'>
+              {meal.strMeal}
+            </h2>
+            <p className='text-gray-600 mb-4'>
+              <span className='font-semibold'>Category:</span>{" "}
+              {meal.strCategory} |<span className='font-semibold'> Area:</span>{" "}
+              {meal.strArea}
+            </p>
+            <h3 className='text-xl font-semibold mb-2 text-gray-800'>
+              Instructions:
+            </h3>
+            <p className='text-gray-600 mb-4'>{meal.strInstructions}</p>
+            <h3 className='text-xl font-semibold mb-2 text-gray-800'>
+              Ingredients:
+            </h3>
+            <ul className='list-disc list-inside text-gray-600'>
+              {Object.keys(meal)
+                .filter(
+                  (key) =>
+                    key.startsWith("strIngredient") && meal[key as keyof Meal]
+                )
+                .map((key, index) => (
+                  <li key={key}>
+                    {meal[key as keyof Meal]} -{" "}
+                    {meal[`strMeasure${index + 1}` as keyof Meal]}
+                  </li>
+                ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>
