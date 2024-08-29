@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Meal, MealApiResponse } from "./meals";
 
-const RandomMealButton: React.FC = () => {
+export default function RandomMealButton() {
   const [meal, setMeal] = useState<Meal | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +83,4 @@ const RandomMealButton: React.FC = () => {
       )}
     </div>
   );
-};
-
-export default RandomMealButton;
+}
